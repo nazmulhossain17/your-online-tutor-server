@@ -12,7 +12,12 @@ app.use(express.json());
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.fiuga7j.mongodb.net/?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+const client = new MongoClient(uri, { 
+useNewUrlParser: true,
+ useUnifiedTopology: true,
+ serverApi: ServerApiVersion.v1 
+ connectTimeoutMS: 30000
+});
 
 function verifyJWT(req, res, next){
     const authHeader = req.headers.authorization;
@@ -37,7 +42,7 @@ async function run(){
 
         app.post('/jwt', (req, res)=>{
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d'})
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '60d'})
             res.send({token});
         })
 
@@ -75,7 +80,7 @@ async function run(){
             res.send(orders);
         })
 
-        app.post('/orders', async(req, res)=>{
+        app.post('/orders', verifyJWT, async(req, res)=>{
             const order = req.body;
             const result = await ordersCollection.insertOne(order);
             res.send(result);
